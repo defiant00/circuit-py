@@ -4,23 +4,26 @@ from adafruit_is31fl3741.adafruit_rgbmatrixqt import Adafruit_RGBMatrixQT
 from input import Keyboard
 from light import Light
 
-# i2c = board.I2C()
-# is31 = Adafruit_RGBMatrixQT(i2c, allocate=adafruit_is31fl3741.PREFER_BUFFER)
+i2c = board.I2C()
+is31 = Adafruit_RGBMatrixQT(i2c, allocate=adafruit_is31fl3741.PREFER_BUFFER)
 
-# is31.set_led_scaling(0xFF)
-# is31.global_current = 0xFF
-# is31.enable = True
+is31.set_led_scaling(0xFF)
+is31.global_current = 0xFF
+is31.enable = True
 
-STEP = 32
+STEP = 8
+TIMER_STEP = 1000
 
 
 class RgbLight:
     def __init__(self):
-        self.r = 0
-        self.g = 0
-        self.b = 0
+        self.r = 64
+        self.g = 64
+        self.b = 64
         self.light_mod = 2
         self.light_mod_offset = 0
+        self.timer = 0
+        self.on = False
 
     def update(self):
         # input
@@ -63,15 +66,26 @@ class RgbLight:
                 self.light_mod = 1
             self.light_mod_offset %= self.light_mod
 
-        # light mod offset 0
-        if Keyboard.Keys[0].just_pressed:
+        if (
+            Keyboard.Keys[15].just_pressed
+            or Keyboard.Keys[16].just_pressed
+            or Keyboard.Keys[17].just_pressed
+            or Keyboard.Keys[18].just_pressed
+        ):
+            self.on = not self.on
+
+        self.timer += 1
+        if self.timer >= TIMER_STEP:
+            self.timer -= TIMER_STEP
             self.light_mod_offset = (self.light_mod_offset + 1) % self.light_mod
 
     def draw(self):
-        pass
-        # is31.fill(0)
-        # self.light.draw(is31, total)
-        # is31.show()
+        is31.fill(0)
+        if self.on:
+            Light.draw(
+                is31, self.r, self.g, self.b, self.light_mod, self.light_mod_offset
+            )
+        is31.show()
 
 
 rgbl = RgbLight()
